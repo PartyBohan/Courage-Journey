@@ -1,20 +1,66 @@
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0a0a0a">
+    <meta name="description" content="Journey of Courage - An interactive adventure about courage through 5 mystical zones">
+    <title>Journey of Courage</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
             overflow: hidden;
+            position: fixed;
+            top: 0;
+            left: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #0a0a0a;
+            -webkit-overflow-scrolling: touch;
+            -webkit-user-select: none;
+            user-select: none;
+            touch-action: none;
+        }
+        
+        html {
+            height: -webkit-fill-available;
         }
 
         #gameContainer {
-            position: relative;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             width: 100vw;
             height: 100vh;
             overflow: hidden;
+            margin: 0;
+            padding: 0;
         }
 
         #gameCanvas {
             display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
+            margin: 0;
+            padding: 0;
             image-rendering: -webkit-optimize-contrast;
         }
 
@@ -359,11 +405,15 @@
         }
 
         #startScreen {
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            right: 0;
+            bottom: 0;
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             display: flex;
             flex-direction: column;
@@ -541,13 +591,29 @@
 
         let gameStarted = false;
         
-        // Set canvas size
+        // Set canvas size to fill viewport
         function resizeCanvas() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
+            
+            // Regenerate positions if zones exist
+            if (gameStarted && zonePositions.length > 0) {
+                generateZonePositions();
+            }
         }
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
+        
+        // Prevent scrolling and zooming
+        document.addEventListener('touchmove', function(e) {
+            if (e.target.tagName !== 'CANVAS' && !e.target.classList.contains('mobile-btn')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        document.addEventListener('gesturestart', function(e) {
+            e.preventDefault();
+        });
 
         // Game state
         const player = {
