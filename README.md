@@ -1,4 +1,4 @@
-#<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -110,6 +110,85 @@
             border-radius: 10px;
             color: white;
             border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        #mobileControls {
+            position: absolute;
+            bottom: 20px;
+            right: 250px;
+            display: none;
+            gap: 10px;
+        }
+        
+        .mobile-btn-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .mobile-btn {
+            width: 60px;
+            height: 60px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 215, 0, 0.5);
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+            touch-action: none;
+            transition: all 0.1s ease;
+        }
+        
+        .mobile-btn:active {
+            background: rgba(255, 215, 0, 0.3);
+            transform: scale(0.95);
+        }
+        
+        .mobile-btn.pressed {
+            background: rgba(255, 215, 0, 0.5);
+            transform: scale(0.95);
+        }
+        
+        #swipeHint {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px 30px;
+            border-radius: 15px;
+            color: white;
+            text-align: center;
+            font-size: 16px;
+            display: none;
+            pointer-events: none;
+            z-index: 100;
+        }
+        
+        @media (max-width: 768px) {
+            #mobileControls {
+                display: flex;
+                flex-direction: column;
+                right: 20px;
+                bottom: 80px;
+            }
+            
+            #swipeHint {
+                display: block;
+                animation: fadeInOut 3s ease-in-out;
+            }
+        }
+        
+        @keyframes fadeInOut {
+            0% { opacity: 0; }
+            20% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { opacity: 0; }
         }
         
         #musicIndicator {
@@ -251,20 +330,17 @@
             }
 
             #controls {
-                bottom: 10px;
-                left: 10px;
-                padding: 10px 15px;
-                font-size: 12px;
+                display: none;
             }
             
             #musicIndicator {
-                bottom: 70px;
+                bottom: 10px;
                 padding: 8px 15px;
                 font-size: 12px;
             }
 
             #storyPanel.position-bottom {
-                bottom: 120px;
+                bottom: 200px;
             }
             
             #storyPanel.position-top {
@@ -279,6 +355,19 @@
             .zone-badge {
                 font-size: 10px;
                 padding: 6px;
+            }
+            
+            #mobileControls {
+                display: flex;
+                flex-direction: column;
+                right: 20px;
+                bottom: 20px;
+            }
+            
+            .mobile-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
             }
         }
 
@@ -372,6 +461,23 @@
             <p>⬅️ ➡️ Arrow Keys: Move</p>
             <p>⬆️ ⬇️ Arrow Keys: Jump Between Zones</p>
             <p>📖 Walk to story orbs to read</p>
+        </div>
+        
+        <div id="mobileControls">
+            <div class="mobile-btn-group">
+                <div class="mobile-btn" id="btnUp">⬆️</div>
+            </div>
+            <div class="mobile-btn-group">
+                <div class="mobile-btn" id="btnLeft">⬅️</div>
+                <div class="mobile-btn" id="btnRight">➡️</div>
+            </div>
+            <div class="mobile-btn-group">
+                <div class="mobile-btn" id="btnDown">⬇️</div>
+            </div>
+        </div>
+        
+        <div id="swipeHint">
+            Swipe up/down to change zones 👆👇
         </div>
         
         <div id="musicIndicator">
@@ -963,6 +1069,145 @@
         window.addEventListener('keyup', (e) => {
             keys[e.key] = false;
         });
+        
+        // Mobile touch controls
+        function setupMobileControls() {
+            const btnLeft = document.getElementById('btnLeft');
+            const btnRight = document.getElementById('btnRight');
+            const btnUp = document.getElementById('btnUp');
+            const btnDown = document.getElementById('btnDown');
+            
+            // Left button
+            btnLeft.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                keys['ArrowLeft'] = true;
+                btnLeft.classList.add('pressed');
+            });
+            btnLeft.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                keys['ArrowLeft'] = false;
+                btnLeft.classList.remove('pressed');
+            });
+            
+            // Right button
+            btnRight.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                keys['ArrowRight'] = true;
+                btnRight.classList.add('pressed');
+            });
+            btnRight.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                keys['ArrowRight'] = false;
+                btnRight.classList.remove('pressed');
+            });
+            
+            // Up button
+            btnUp.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (player.currentZone > 0 && gameStarted) {
+                    player.currentZone--;
+                    playZoneTransition();
+                    playZoneMusic(player.currentZone);
+                    initializeStoryTriggers();
+                }
+                btnUp.classList.add('pressed');
+                setTimeout(() => btnUp.classList.remove('pressed'), 200);
+            });
+            
+            // Down button
+            btnDown.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (player.currentZone < zones.length - 1 && gameStarted) {
+                    player.currentZone++;
+                    player.visitedZones.add(player.currentZone);
+                    updateProgress();
+                    playZoneTransition();
+                    playZoneMusic(player.currentZone);
+                    initializeStoryTriggers();
+                }
+                btnDown.classList.add('pressed');
+                setTimeout(() => btnDown.classList.remove('pressed'), 200);
+            });
+            
+            // Also support mouse for testing
+            btnLeft.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                keys['ArrowLeft'] = true;
+                btnLeft.classList.add('pressed');
+            });
+            btnLeft.addEventListener('mouseup', (e) => {
+                e.preventDefault();
+                keys['ArrowLeft'] = false;
+                btnLeft.classList.remove('pressed');
+            });
+            
+            btnRight.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                keys['ArrowRight'] = true;
+                btnRight.classList.add('pressed');
+            });
+            btnRight.addEventListener('mouseup', (e) => {
+                e.preventDefault();
+                keys['ArrowRight'] = false;
+                btnRight.classList.remove('pressed');
+            });
+            
+            // Prevent scrolling on mobile
+            document.getElementById('mobileControls').addEventListener('touchmove', (e) => {
+                e.preventDefault();
+            }, { passive: false });
+        }
+        
+        // Initialize mobile controls
+        setupMobileControls();
+        
+        // Swipe detection for zone switching
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchEndX = 0;
+        let touchEndY = 0;
+        
+        canvas.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        }, { passive: true });
+        
+        canvas.addEventListener('touchend', (e) => {
+            if (!gameStarted) return;
+            
+            touchEndX = e.changedTouches[0].screenX;
+            touchEndY = e.changedTouches[0].screenY;
+            handleSwipe();
+        }, { passive: true });
+        
+        function handleSwipe() {
+            const deltaX = touchEndX - touchStartX;
+            const deltaY = touchEndY - touchStartY;
+            const minSwipeDistance = 50;
+            
+            // Vertical swipe is more significant
+            if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > minSwipeDistance) {
+                if (deltaY < 0) {
+                    // Swipe up - move down through zones
+                    if (player.currentZone < zones.length - 1) {
+                        player.currentZone++;
+                        player.visitedZones.add(player.currentZone);
+                        updateProgress();
+                        playZoneTransition();
+                        playZoneMusic(player.currentZone);
+                        initializeStoryTriggers();
+                    }
+                } else {
+                    // Swipe down - move up through zones
+                    if (player.currentZone > 0) {
+                        player.currentZone--;
+                        playZoneTransition();
+                        playZoneMusic(player.currentZone);
+                        initializeStoryTriggers();
+                    }
+                }
+            }
+        }
 
         // Generate random positions for all zones
         function generateZonePositions() {
@@ -1021,6 +1266,17 @@
             
             // Initialize story triggers for first zone
             initializeStoryTriggers();
+            
+            // Show swipe hint on mobile
+            if (window.innerWidth <= 768) {
+                setTimeout(() => {
+                    const swipeHint = document.getElementById('swipeHint');
+                    swipeHint.style.display = 'block';
+                    setTimeout(() => {
+                        swipeHint.style.display = 'none';
+                    }, 3000);
+                }, 1000);
+            }
             
             gameLoop();
         });
